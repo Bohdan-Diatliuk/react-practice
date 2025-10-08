@@ -1,3 +1,4 @@
+/* eslint-disable function-paren-newline */
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { useState } from 'react';
 import cn from 'classnames';
@@ -10,10 +11,12 @@ import productsFromServer from './api/products';
 export const App = () => {
   const [selectedUser, setSelectedUser] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   const resetFilters = () => {
     setSelectedUser('all');
     setSearchQuery('');
+    setSelectedCategories([]);
   };
 
   const filteredProducts = productsFromServer.filter(product => {
@@ -29,8 +32,22 @@ export const App = () => {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    return matchesUser && matchesSearch;
+    const matchesCanegory =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(category.id);
+
+    return matchesUser && matchesSearch && matchesCanegory;
   });
+
+  const toggleCategory = categoryId => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(catId => catId !== categoryId)
+        : [...prev, categoryId],
+    );
+  };
+
+  const clearCategories = () => setSelectedCategories([]);
 
   return (
     <div className="section">
@@ -85,6 +102,31 @@ export const App = () => {
                   </span>
                 )}
               </p>
+            </div>
+
+            <div className="panel-block is-flex-wrap-wrap">
+              <button
+                type="button"
+                onClick={clearCategories}
+                className={cn('button mr-2 my-1', {
+                  'is-outlined': selectedCategories.length > 0,
+                })}
+              >
+                All
+              </button>
+
+              {categoriesFromServer.map(cat => (
+                <button
+                  type="button"
+                  key={cat.id}
+                  className={cn('button mr-2 my-1', {
+                    'is-info': selectedCategories.includes(cat.id),
+                  })}
+                  onClick={() => toggleCategory(cat.id)}
+                >
+                  {cat.title}
+                </button>
+              ))}
             </div>
 
             <div className="panel-block">
