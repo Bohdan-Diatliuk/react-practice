@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React from 'react';
+import React, { useState } from 'react';
 import cn from 'classnames';
 import './App.scss';
 
@@ -7,14 +7,32 @@ import usersFromServer from './api/users';
 import categoriesFromServer from './api/categories';
 import productsFromServer from './api/products';
 
-// const products = productsFromServer.map((product) => {
-//   const category = null; // find by product.categoryId
-//   const user = null; // find by category.ownerId
-
-//   return null;
-// });
-
 export const App = () => {
+  const [selectedUser, setSelectedUser] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const resetFilters = () => {
+    setSelectedUser('all');
+    setSearchQuery('');
+  };
+
+  const filteredProducts = productsFromServer.filter(product => {
+    const category = categoriesFromServer.find(
+      cat => cat.id === product.categoryId,
+    );
+    const users = category
+      ? usersFromServer.find(user => user.id === category.ownerId)
+      : null;
+
+    const matchesUser = selectedUser === 'all' || users.id === selectedUser;
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      users.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesUser && matchesSearch;
+  });
+
   return (
     <div className="section">
       <div className="container">
@@ -25,89 +43,50 @@ export const App = () => {
             <p className="panel-heading">Filters</p>
 
             <p className="panel-tabs has-text-weight-bold">
-              <a data-cy="FilterAllUsers" href="#/">
+              <a
+                data-cy="FilterAllUsers"
+                href="#/"
+                className={selectedUser === 'all' ? 'is-active' : ''}
+                onClick={() => setSelectedUser('all')}
+              >
                 All
               </a>
 
-              <a data-cy="FilterUser" href="#/">
-                User 1
-              </a>
-
-              <a data-cy="FilterUser" href="#/" className="is-active">
-                User 2
-              </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 3
-              </a>
+              {usersFromServer.map(user => (
+                <a
+                  key={user.id}
+                  href="#/"
+                  className={selectedUser === user.id ? 'is-active' : ''}
+                  onClick={() => setSelectedUser(user.id)}
+                >
+                  {user.name}
+                </a>
+              ))}
             </p>
 
             <div className="panel-block">
-              <p className="control has-icons-left has-icons-right">
+              <p className="control has-icons-left">
                 <input
-                  data-cy="SearchField"
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={searchQuery}
+                  onChange={event => setSearchQuery(event.target.value)}
                 />
-
                 <span className="icon is-left">
                   <i className="fas fa-search" aria-hidden="true" />
-                </span>
-
-                <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
                 </span>
               </p>
             </div>
 
-            <div className="panel-block is-flex-wrap-wrap">
-              <a
-                href="#/"
-                data-cy="AllCategories"
-                className="button is-success mr-6 is-outlined"
-              >
-                All
-              </a>
-
-              <a
-                data-cy="Category"
-                className="button mr-2 my-1 is-info"
-                href="#/"
-              >
-                Category 1
-              </a>
-
-              <a data-cy="Category" className="button mr-2 my-1" href="#/">
-                Category 2
-              </a>
-
-              <a
-                data-cy="Category"
-                className="button mr-2 my-1 is-info"
-                href="#/"
-              >
-                Category 3
-              </a>
-              <a data-cy="Category" className="button mr-2 my-1" href="#/">
-                Category 4
-              </a>
-            </div>
-
             <div className="panel-block">
-              <a
-                data-cy="ResetAllButton"
-                href="#/"
+              <button
+                type="button"
                 className="button is-link is-outlined is-fullwidth"
+                onClick={resetFilters}
               >
                 Reset all filters
-              </a>
+              </button>
             </div>
           </nav>
         </div>
@@ -170,7 +149,7 @@ export const App = () => {
             </thead>
 
             <tbody>
-              {productsFromServer.map(product => {
+              {filteredProducts.map(product => {
                 const category = categoriesFromServer.find(
                   cat => cat.id === product.categoryId,
                 );
