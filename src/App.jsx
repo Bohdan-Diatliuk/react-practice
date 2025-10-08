@@ -28,15 +28,16 @@ export const App = () => {
       : null;
 
     const matchesUser = selectedUser === 'all' || users.id === selectedUser;
-    const matchesSearch = users.name
+    const matchesSearch = [product.name, category.title, users.name]
+      .join('')
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    const matchesCanegory =
+    const matchesCategory =
       selectedCategories.length === 0 ||
       selectedCategories.includes(category.id);
 
-    return matchesUser && matchesSearch && matchesCanegory;
+    return matchesUser && matchesSearch && matchesCategory;
   });
 
   const toggleCategory = categoryId => {
